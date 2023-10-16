@@ -5,7 +5,6 @@
 # pip install mediapipe
 # pip install protobuf==3.20.*
 
-
 import cv2
 import mediapipe as mp
 
@@ -21,10 +20,11 @@ mp_drawing = mp.solutions.drawing_utils
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
 # 이미지 읽기
-image = cv2.imread("face.jpg")
+image = cv2.imread("img")
 
 # 얼굴 검출
 results = face_mesh.process(image) 
+
 
 # Face Mesh 그리기
 for single_face_landmarks in results.multi_face_landmarks:
@@ -39,6 +39,8 @@ for single_face_landmarks in results.multi_face_landmarks:
 # 저장
 cv2.imwrite("face-mesh.jpg", image)
 
+# 테스트 결과 측면의 얼굴도 잘 인식함
+
 # process를 통해 객체 검출 진행, multi_face_landmarks를 통해 관련 정보 확인 가능
 # mp.solutions.face_mesh.DrawingSpec == 랜드마크 출력을 위한 객체, draw_landmarks 이용 이미지에 Face Mesh 출력. 
 
@@ -48,16 +50,14 @@ cv2.imwrite("face-mesh.jpg", image)
 
 
 # Face Mesh has 468 landmarks
-
+# results.multi_face_landmarks[i].landmark[j] i 번쨰 얼굴의 j 랜드마크
 for single_face_landmarks in results.multi_face_landmarks:
     coordinates = single_face_landmarks.landmark["<<index of landmark>>"]
     coordinates.x, coordinates.y, coordinates.z
 
 # landmark에서 원하는 랜드마크 인덱스를 통해 좌표를 가져오고 x, y, z를 통해 값을 가져온다.
-
 # x,y are normalized values that has rage of 0~1
 # z represents ralative depth respect to a flat poligon going through middle of Mesh
-
 
 
 ### test case
