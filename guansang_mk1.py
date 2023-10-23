@@ -53,8 +53,6 @@ for img_name in tqdm(test_data_names):
     processed_data.append(generator.data_processing(base_dir + 'test_img/' + img_name))
 
 
-
-
 import torch
 import torch.nn as nn
 
