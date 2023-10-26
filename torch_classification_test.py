@@ -86,7 +86,9 @@ for epoch in range(2):   # 데이터셋을 수차례 반복합니다.
 
         # 순전파 + 역전파 + 최적화를 한 후
         outputs = net(inputs) # 예측 결과 생성 (순전파)
-        loss = criterion(outputs, labels) # loss값 측정 (이떄 모델이랑 연결되는듯)
+        loss = criterion(outputs, labels) # loss값 측정 (이떄 모델이랑 연결되는듯) 
+                                          # In the line l = loss(Y, y_pred), the predictions are used to calculate the loss. This effectively connects the model parameters with the loss such that loss.backward() can do the backpropagation for the network to compute the parameter gradients.
+                                          # https://stackoverflow.com/questions/73423703/how-pytorch-loss-connect-to-model-parameters
         loss.backward() # 역전파 및 grad update
         optimizer.step() # grad 바탕으로 최적화
 
