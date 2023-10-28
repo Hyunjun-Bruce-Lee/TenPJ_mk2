@@ -70,7 +70,7 @@ net = Net()
 
 
 import torch.optim as optim
-criterion = nn.CrossEntropyLoss() # loss function
+criterion = nn.CrossEntropyLoss() # loss function, in torch when you use crossentrophyloss you dont have to one-hot encode the labels. it does it for you.
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9) # bind the optimizer to the model params
 
 

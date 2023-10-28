@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import math
 from tqdm import tqdm
+import numpy as np
 
 # pip3 install torch torchvision torchaudio v(2.1.0)
 
@@ -32,7 +33,7 @@ class face_mesh_generator:
                 two = landmark_info[j]
                 temp_arr.append(self.get_length([one.x, two.x], [one.y, two.y], [one.z, two.z]))
             cal_arr.append(temp_arr)
-        return cal_arr
+        return np.array(cal_arr)
 
 
 generator = face_mesh_generator()
@@ -41,18 +42,20 @@ test = generator.data_processing(image_dir)
 image_dir = 'test_img/news-p.v1.20230829.e92fb8ed6d954b70b9b621b20b8ab443_P1.jpg'
 test2 = generator.data_processing(image_dir)
 
-test # 478*478 matrix
+test.shape
+test # 478*478 np.array
+
 
 
 import os
 import numpy as np
 
 base_dir = os.getcwd()
-test_data_names = os.listdir(base_dir + 'test_img')
+test_data_names = os.listdir(base_dir + '/test_img')
 
 processed_data = list()
 for img_name in tqdm(test_data_names):
-    processed_data.append(generator.data_processing(base_dir + 'test_img/' + img_name))
+    processed_data.append(generator.data_processing(base_dir + '/test_img/' + img_name))
 
 processed_data = np.array(processed_data)
 
