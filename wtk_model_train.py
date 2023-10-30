@@ -53,11 +53,11 @@ class wtk_model(nn.Module):
         self.pool_1st = nn.MaxPool2d((9,9),stride = 2) # out shape (172,172)
         self.conv_2nd = nn.Conv2d(3,3,2**6, padding = 8) # out shape (125,125)
         self.pool_2nd = nn.MaxPool2d((5,5), stride = 5) # out shape (25,25)
-        self.ffn_1st = nn.Linear(int(3*25*25), 2**9)
-        self.ffn_2nd = nn.Linear((2**9), int((2**9)/4))
-        self.ffn_3rd = nn.Linear(128, 64)
-        self.ffn_4th = nn.Linear(64,32)
-        self.ffn_fin = nn.Linear(32,4)
+        self.ffn_1st = nn.Linear(3*25*25, 2**9)
+        self.ffn_2nd = nn.Linear(2**9, 2**7)
+        self.ffn_3rd = nn.Linear(2**7, 2**5)
+        self.ffn_4th = nn.Linear(2**5, 2**4)
+        self.ffn_fin = nn.Linear(2**3,4)
         self.dropout = nn.Dropout(0.3)
     
     def forward(self, x):
