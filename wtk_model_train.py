@@ -102,3 +102,7 @@ test_input = torch.tensor(test_input, dtype = torch.float32)
 test_input = test_input.to(device)
 pred_probab = nn.Softmax(dim=1)(wtk(test_input))
 pred_probab.argmax(1)
+
+# from gpu model to cpu
+# torch.save(model.state_dict(), PATH)
+# model.load_state_dict(torch.load(PATH, map_location=device))
