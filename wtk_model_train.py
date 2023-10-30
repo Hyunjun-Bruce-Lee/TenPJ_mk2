@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
@@ -9,8 +10,14 @@ from tqdm import tqdm
 import numpy as np
 import pickle
 
-with open('/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/train_dataset.bin', 'rb') as f:
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+base_dir = os.getcwd()
+
+with open(f'{base_dir}/train_dataset.bin', 'rb') as f:
     loaded_data = pickle.load(f)
+
+loaded_data['labels'] = [i-1 for i in loaded_data['labels']]
 
 wtk_data = np.array(loaded_data['data'])
 wtk_labels = np.array(loaded_data['labels'])
@@ -39,8 +46,6 @@ guansang_dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
 next(iter(guansang_dataloader))
 
 
-
-
 class wtk_model(nn.Module):
     def __init__(self):
         super().__init__()        # input shape (478,478)
@@ -49,9 +54,9 @@ class wtk_model(nn.Module):
         self.conv_2nd = nn.Conv2d(3,3,2**6, padding = 8) # out shape (125,125)
         self.pool_2nd = nn.MaxPool2d((5,5), stride = 5) # out shape (25,25)
         self.ffn_1st = nn.Linear(int(3*25*25), 2**9)
-        self.ffn_2nd = nn.Linear(int((2**9)/2), int((2**9)/4))
+        self.ffn_2nd = nn.Linear((2**9), int((2**9)/4))
         self.ffn_3rd = nn.Linear(128, 64)
-        self.ffn_4th = nn.Linear(63,32)
+        self.ffn_4th = nn.Linear(64,32)
         self.ffn_fin = nn.Linear(32,4)
         self.dropout = nn.Dropout(0.3)
     
@@ -66,16 +71,19 @@ class wtk_model(nn.Module):
         x = self.ffn_fin(x)
         return x 
     
-wtk = wtk_model()
+wtk = wtk_model().to(device)
+
 
 # Training
-loss_fc = nn.CrossEntropyLoss()
+loss_fc = nn.CrossEntropyLoss().cuda()
 optimizer = optim.Adam(wtk.parameters(), lr = 1e-3)
 
 for epoch in range(2):
     running_loss = 0.0
     for i, data in enumerate(guansang_dataloader, 0):
         inputs, labels = data
+        labels = labels.type(torch.LongTensor) # casting to long tensor (when using gpu int is not implemented)
+        inputs, labels = inputs.to(device), labels.to(device) # only when using gpu
         optimizer.zero_grad()
         outputs = wtk(inputs)
         loss = loss_fc(outputs, labels)
@@ -89,5 +97,8 @@ for epoch in range(2):
 
 
 # predicting test
-test_input = iter(guansang_dataloader).next()
-pred_probab = nn.Softmax(dim=1)(wtk(test_input[0]))
+test_input = np.expand_dims(wtk_data[0], 0)
+test_input = torch.tensor(test_input, dtype = torch.float32)
+test_input = test_input.to(device)
+pred_probab = nn.Softmax(dim=1)(wtk(test_input))
+pred_probab.argmax(1)
