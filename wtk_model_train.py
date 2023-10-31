@@ -57,7 +57,7 @@ class wtk_model(nn.Module):
         self.ffn_2nd = nn.Linear(2**9, 2**7)
         self.ffn_3rd = nn.Linear(2**7, 2**5)
         self.ffn_4th = nn.Linear(2**5, 2**4)
-        self.ffn_fin = nn.Linear(2**3,4)
+        self.ffn_fin = nn.Linear(2**4,4)
         self.dropout = nn.Dropout(0.3)
     
     def forward(self, x):
