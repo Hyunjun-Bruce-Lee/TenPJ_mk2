@@ -10,8 +10,6 @@ import torch.nn.functional as F
 import mediapipe as mp
 import math
 
-seed_num = 1004
-
 # data parsing
 class data_parser :
     def __init__(self):
@@ -109,30 +107,17 @@ proba_list = resp_gen.predict_all(test_temp)
 for i in range(len(proba_list)):
     print(proba_list[i])
 
-
-proba_list[0][0][0]
-proba_list[1][0][0]
-proba_list[2][0][0]
-proba_list[3][0][0]
-
-
-for i in range(1,5):
-    exec(f'label_{i} = [i[0][{i-1}] for i in proba_list]')
-
-
-
 rank_dict = {1:0,2:0,3:0,4:0}
-label_1.index(max(label_1))
 
+for label_num in range(0,4):    
+    temp_list = [proba_list[person][0][label_num] for person in range(len(proba_list))]
 
-rank_dict[1] = label_1.index(max(label_1))
-rank_dict[2] = label_2.index(max(label_2))
-rank_dict[3] = label_3.index(max(label_3))
-rank_dict[4] = label_4.index(max(label_4))
+    highest_person = temp_list.index(max(temp_list))
 
-
+    rank_dict[highest_person+1] = label_num
 
 rank_dict
+
 
 # API
 router = APIRouter()
@@ -147,4 +132,3 @@ async def upload_result(file: UploadFile):
     
  
     return 'result'
-
