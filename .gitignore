@@ -1,0 +1,8 @@
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.avif
+.DS_Store
+*.bin
+*.pth
