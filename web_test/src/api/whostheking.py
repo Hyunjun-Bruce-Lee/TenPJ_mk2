@@ -111,12 +111,28 @@ rank_dict = {1:0,2:0,3:0,4:0}
 
 for label_num in range(0,4):    
     temp_list = [proba_list[person][0][label_num] for person in range(len(proba_list))]
-
     highest_person = temp_list.index(max(temp_list))
-
     rank_dict[highest_person+1] = label_num
 
 rank_dict
+
+class response_generator:
+    def __init__(self, original_img):
+        self.img = original_img
+        self.imgmapper = {'label' : 'label_img_dir'}
+        pass
+
+    def rank_sorter(self, probal_list):
+        rank_dict = {1:0,2:0,3:0,4:0}
+        for label_num in range(0,4):
+            temp_list = [proba_list[person][0][label_num] for person in range(len(proba_list))]
+            highest_person = temp_list.index(max(temp_list))
+            rank_dict[highest_person+1] = label_num
+        return rank_dict
+
+    def stamp_img(self, rank_dict, position_info):
+        # position_info as dict type that holds position for head of each person 
+        pass
 
 
 # API
