@@ -35,3 +35,18 @@ drawing_image = image.copy()
  
 cv2.circle(drawing_image, (n_x_i, n_y_i), 10, (0, 0, 255), 3) 
 cv2.imwrite("stamp_test.jpg", drawing_image)
+
+
+
+
+
+king_stamp = cv2.imread('/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/stamps/king.jpeg')
+
+cv2.imshow('test',king_stamp)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+
+cv2.destroyWindow('test')
+
+
