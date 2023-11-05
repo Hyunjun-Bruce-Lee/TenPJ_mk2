@@ -10,17 +10,15 @@ face_mesh = mp_face_mesh.FaceMesh(
     max_num_faces=4, # 최대 검출 얼굴 개수
 )
 
-mp_drawing = mp.solutions.drawing_utils
-drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
-
 # 이미지 읽기
-image = cv2.imread("/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/test_img/p179506928231510_590.jpg")
-king_stamp = cv2.imread('/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/stamps/king.jpeg')
+image = cv2.imread("/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/test_img/landscape.jpeg")
 
 # 얼굴 검출
 # 21 : left idx
 # 251 : right idx
 results = face_mesh.process(image) 
+
+len(results.multi_face_landmarks)
 
 person_idx = 2
 
@@ -58,6 +56,11 @@ cv2.circle(drawing_image, (right_x_act, right_y_act), 10, (0, 0, 255), 3)
 cv2.circle(drawing_image, (bottom_x_act, bottom_y_act), 10, (255, 0, 0), 3) 
 cv2.imwrite("stamp_test.jpg", drawing_image)
 
+test = image[:,left_x_act:right_x_act] # 180 ~ 268
+
+roi = new_img[: , lx : rx]
+
+cv2.imwrite('stamp_roi2.jpg', roi)
 
 
 # stamp resize
@@ -138,7 +141,7 @@ for person_idx in range(0,4):
     #new_img[middle_y-stamp_y: middle_y, middle_x - math.floor(stamp_x/2) : middle_x + math.ceil(stamp_x/2)] = dst
     new_img[middle_y-stamp_y: middle_y, lx : rx] = dst
 
-cv2.imwrite('stamp_test2.jpg', new_img)
+cv2.imwrite('stamp_test3.jpg', new_img)
 
 
 
@@ -186,3 +189,8 @@ test_img = raw_img[:,180:268]
 
 
 cv2.imwrite('test_img.jpg', test_img)
+
+
+
+
+
