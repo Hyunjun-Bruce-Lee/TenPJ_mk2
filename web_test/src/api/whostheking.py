@@ -9,6 +9,7 @@ import cv2
 import torch.nn.functional as F
 import mediapipe as mp
 import math
+import asyncio
 
 # whos the king model
 class wtk_model(nn.Module):
@@ -53,7 +54,7 @@ class wtk_temp_model(nn.Module):
 
 
 
-
+asyncio.gather(*())
 # data parsing
 class data_parser :
     def __init__(self):
@@ -67,7 +68,7 @@ class data_parser :
         position_holder = await self.get_data_for_stamping(result, (img.shape[0], img.shape[1]))
         result = await self.get_landmarks_by_face(result)
         data_holder = [await self.generate_matrix(result[key]) for key in result.keys()]
-        return np.expand_dims(np.array(data_holder), axis = 1), position_holder
+        return data_holder, position_holder
 
     async def get_length(self, x,y,z):
         return math.sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2)
@@ -88,7 +89,7 @@ class data_parser :
             one, temp_arr = landmark_info[i], list()
             for j in range(len(landmark_info)):
                 two = landmark_info[j]
-                temp_arr.append(self.get_length([one.x, two.x], [one.y, two.y], [one.z, two.z]))
+                temp_arr.append(await self.get_length([one.x, two.x], [one.y, two.y], [one.z, two.z]))
             cal_arr.append(temp_arr)
         return cal_arr
     
@@ -119,25 +120,22 @@ class proba_generator:
         self.model = wtk_temp_model()
         if load_weight == True:
             self.model.load_state_dict(torch.load('PATH'), map_location=torch.device('cpu'))
-    
+
+    async def predict_all(self, whole_data):
+        proba_holder = await asyncio.gather(*(self.predict(single_data) for single_data in whole_data))
+        return proba_holder
+
     async def predict(self, single_data):
-        single_data = np.expand_dims(single_data, axis = 0)
-        single_data = torch.tensor(single_data, dtype = torch.float32)
-        with torch.no_grad():
+        single_data = np.expand_dims(single_data, axis=0)
+        single_data = await self.process_data(single_data)
+
+        with torch.no_grad(): 
             proba = nn.Softmax(dim=1)(self.model(single_data))
         return proba.numpy()
     
-    async def predict_all(self, whole_data):
-        proba_holder = list()
-        for single_data in whole_data: # 4d shape
-            proba_holder.append(await self.predict(single_data))
-        return proba_holder
-
-
-
-
-
-
+    async def process_data(self, data):
+        data = data.astype(np.float32)
+        return torch.tensor(data, dtype=torch.float32)
 
 
 
@@ -240,19 +238,29 @@ route = APIRouter()
 
 @route.post("/whos_the_king")
 async def upload_result(file: UploadFile):
+    print('\n'*10)
+    print('hello')
+    print('\n'*10)
+
     content = await file.read()
     content = np.array(Image.open(BytesIO(content)))[:, :, ::-1]
 
+    print('\n'*10)
+    print('hello2')
+    print('\n'*10)
+
     proba_gen, parser, response_gen = proba_generator(load_weight=False), data_parser(), response_generator(content)
-    
 
-    input_data, pos_hodler = await parser(content)
+    print('\n'*10)
+    print('hello3')
+    print('\n'*10)
 
+    input_data, pos_holder = await parser(content)
     if input_data == '-1':
-        return 'a'
-    
-    proba_list = await proba_gen(input_data)
+        return {'message': '얼굴을 인식할수 없습니다 ㅜㅜ' ,'image':content}
+
+    proba_list = await proba_gen.predict_all(input_data)
     rank_dict = await response_gen.rank_sorter(proba_list)
-    out_img = await response_gen.stamp_img(rank_dict, pos_hodler)
+    out_img = await response_gen.stamp_img(rank_dict, pos_holder)
     
     return {'message': 'test' ,'image':out_img}
