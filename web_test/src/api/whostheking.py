@@ -51,10 +51,6 @@ class wtk_temp_model(nn.Module):
 
 
 
-
-
-
-asyncio.gather(*())
 # data parsing
 class data_parser :
     def __init__(self):
@@ -109,10 +105,6 @@ class data_parser :
         return position_holder
 
 
-
-
-
-
   
 class proba_generator:
     def __init__(self, load_weight = False):
@@ -136,7 +128,6 @@ class proba_generator:
     async def process_data(self, data):
         data = data.astype(np.float32)
         return torch.tensor(data, dtype=torch.float32)
-
 
 
 class response_generator:
@@ -202,61 +193,19 @@ class response_generator:
 
 
 
-
-
-
-# test run
-# import asyncio
-# 
-# test_img = cv2.imread('/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/test_img/people_3.jpg')
-# 
-# content = np.array(test_img)
-# 
-# test_img.shape
-# 
-# test_obj = data_parser()
-# 
-# proba_gen = proba_generator()
-# 
-# response_gen = response_generator(test_img)
-# 
-# test_temp, position_holder = test_obj(test_img) # if no face detected return value == '-1', '-1' here
-# ##### exception needed for no face detected here
-# 
-# proba_list = proba_gen.predict_all(test_temp)
-# 
-# rank_dict = response_gen.rank_sorter(proba_list)
-# 
-# out_img = response_gen.stamp_img(rank_dict, position_holder)
-# 
-# cv2.imwrite('stamp_test3.jpg', out_img)
-
-
-
 # API
 route = APIRouter()
 
 @route.post("/whos_the_king")
 async def upload_result(file: UploadFile):
-    print('\n'*10)
-    print('hello')
-    print('\n'*10)
-
     content = await file.read()
-    content = np.array(Image.open(BytesIO(content)))[:, :, ::-1]
+    content_out = np.array(Image.open(BytesIO(content)))[:, :, ::-1]
 
-    print('\n'*10)
-    print('hello2')
-    print('\n'*10)
+    proba_gen, parser, response_gen = proba_generator(load_weight=False), data_parser(), response_generator(content_out)
 
-    proba_gen, parser, response_gen = proba_generator(load_weight=False), data_parser(), response_generator(content)
-
-    print('\n'*10)
-    print('hello3')
-    print('\n'*10)
-
-    input_data, pos_holder = await parser(content)
+    input_data, pos_holder = await parser(content_out)
     if input_data == '-1':
+        content=base64.b64encode(content).decode('utf-8')
         return {'message': '얼굴을 인식할수 없습니다 ㅜㅜ' ,'image':content}
 
     proba_list = await proba_gen.predict_all(input_data)
