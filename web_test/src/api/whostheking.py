@@ -15,15 +15,13 @@ import asyncio
 class wtk_model(nn.Module):
     def __init__(self):
         super().__init__()        # input shape (478,478)
-        self.conv_1st = nn.Conv2d(1, 3, 2**8, padding = 2**6)   # out shape (351,351)
-        self.pool_1st = nn.MaxPool2d((9,9),stride = 2) # out shape (172,172)
-        self.conv_2nd = nn.Conv2d(3,3,2**6, padding = 8) # out shape (125,125)
-        self.pool_2nd = nn.MaxPool2d((5,5), stride = 5) # out shape (25,25)
-        self.ffn_1st = nn.Linear(3*25*25, 2**9)
-        self.ffn_2nd = nn.Linear(2**9, 2**7)
-        self.ffn_3rd = nn.Linear(2**7, 2**5)
-        self.ffn_4th = nn.Linear(2**5, 2**4)
-        self.ffn_fin = nn.Linear(2**4,4)
+        self.conv_1st = nn.Conv2d(1, 3, 2**8, padding = 10)   # out shape (243,243)
+        self.pool_1st = nn.MaxPool2d((9,9),stride = 2) # out shape (118,118)
+        self.conv_2nd = nn.Conv2d(3,3,2**6, padding = 8) # out shape (65,65)
+        self.pool_2nd = nn.MaxPool2d((5,5), stride = 5) # out shape (13,13)
+        self.ffn_1st = nn.Linear(3*14*14, 2**7)
+        self.ffn_2nd = nn.Linear(2**7, 2**5)
+        self.ffn_fin = nn.Linear(2**5, 4)
         self.dropout = nn.Dropout(0.3)
     
     def forward(self, x):
@@ -32,22 +30,8 @@ class wtk_model(nn.Module):
         x = torch.flatten(x,1)
         x = self.dropout(F.relu(self.ffn_1st(x)))
         x = self.dropout(F.relu(self.ffn_2nd(x)))
-        x = self.dropout(F.relu(self.ffn_3rd(x)))
-        x = self.dropout(F.relu(self.ffn_4th(x)))
         x = self.ffn_fin(x)
         return x 
-
-class wtk_temp_model(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.ffn_1 = nn.Linear(478*478, 16)
-        self.ffn_2 = nn.Linear(16,4)
-
-    def forward(self, x):
-        x = torch.flatten(x,1)
-        x = F.relu(self.ffn_1(x))
-        x = self.ffn_2(x)
-        return x
 
 
 
@@ -64,7 +48,8 @@ class data_parser :
         position_holder = await self.get_data_for_stamping(result, (img.shape[0], img.shape[1]))
         result = await self.get_landmarks_by_face(result)
         data_holder = [await self.generate_matrix(result[key]) for key in result.keys()]
-        return data_holder, position_holder
+        data_holder = np.array(data_holder)
+        return np.expand_dims(data_holder, axis = 1), position_holder
 
     async def get_length(self, x,y,z):
         return math.sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2)
@@ -107,37 +92,31 @@ class data_parser :
 
   
 class proba_generator:
-    def __init__(self, load_weight = False):
-        # self.model = wtk_model()
-        self.model = wtk_temp_model()
-        if load_weight == True:
-            self.model.load_state_dict(torch.load('PATH'), map_location=torch.device('cpu'))
+    def __init__(self):
+        self.model = wtk_model()
+        self.model.load_state_dict(torch.load('./asset/wtk_model_weights.pt', map_location=torch.device('cpu')))
 
     async def predict_all(self, whole_data):
-        proba_holder = await asyncio.gather(*(self.predict(single_data) for single_data in whole_data))
+        proba_holder = [await self.predict(single_data) for single_data in whole_data]
         return proba_holder
 
     async def predict(self, single_data):
         single_data = np.expand_dims(single_data, axis=0)
-        single_data = await self.process_data(single_data)
+        single_data = torch.tensor(single_data, dtype=torch.float32)
 
         with torch.no_grad(): 
             proba = nn.Softmax(dim=1)(self.model(single_data))
         return proba.numpy()
     
-    async def process_data(self, data):
-        data = data.astype(np.float32)
-        return torch.tensor(data, dtype=torch.float32)
-
 
 class response_generator:
     def __init__(self, original_img):
         self.img = original_img
         self.imgmapper = { 
-            0:'/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/stamps/king.jpeg',
-            1:'/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/stamps/noble.jpeg' ,
-            2:'/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/stamps/commoner.jpeg' ,
-            3:'/Users/hyunjun_bruce_lee/Documents/GIT/TenPJ_mk2/stamps/slave.jpeg'
+            0:'./static/whostheking/STAMPS/king.jpeg',
+            1:'./static/whostheking/STAMPS/noble.jpeg',
+            2:'./static/whostheking/STAMPS/commoner.jpeg',
+            3:'./static/whostheking/STAMPS/slave.jpeg'
             }
 
     async def rank_sorter(self, proba_list):
@@ -201,7 +180,7 @@ async def upload_result(file: UploadFile):
     content = await file.read()
     content_out = np.array(Image.open(BytesIO(content)))[:, :, ::-1]
 
-    proba_gen, parser, response_gen = proba_generator(load_weight=False), data_parser(), response_generator(content_out)
+    proba_gen, parser, response_gen = proba_generator(), data_parser(), response_generator(content_out)
 
     input_data, pos_holder = await parser(content_out)
     if input_data == '-1':
@@ -212,4 +191,4 @@ async def upload_result(file: UploadFile):
     rank_dict = await response_gen.rank_sorter(proba_list)
     out_img = await response_gen.stamp_img(rank_dict, pos_holder)
     
-    return {'message': 'test' ,'image':out_img}
+    return {'message': '' ,'image':out_img}
